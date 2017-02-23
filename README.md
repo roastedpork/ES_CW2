@@ -1,2 +1,9 @@
-# ES_CW2
-Embedded Systems Coursework 2
+# Architecture
+
+Three main areas to define interfaces:
+
+* Main Motor Controller (Nested PID)
+* Serial Communications with external
+* Interrupt Routines for Encoder
+
+
