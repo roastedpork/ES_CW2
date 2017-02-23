@@ -6,4 +6,6 @@ Three main areas to define interfaces:
 * Serial Communications with external
 * Interrupt Routines for Encoder
 
+# Compiler
 
+Keil? ARM GCC?
