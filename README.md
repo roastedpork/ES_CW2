@@ -20,3 +20,11 @@ Using Keil uVision 5.0, drivers and install files to be transferred via USB thum
 - [ ] Set up serial input
 - [ ] Write functionalities into threaded code
 - [ ] TBD
+
+# PID implementation
+
+Pseudo-code for PID implenmentation
+
+```
+test
+```
