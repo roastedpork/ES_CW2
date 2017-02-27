@@ -27,7 +27,7 @@ Pseudo-code for PID implenmentation
 
 ```cpp
 
-#define CONTROL_PERIOD 0.01
+#define CONTROL_PERIOD 0.01 // 100Hz control loop
 
 int actual_state;
 int target_state;
@@ -45,7 +45,11 @@ float ki;
 float kd;
 
 while(1){
-	wait(CONTROL_PERIOD); // 100Hz control loop
+	// Update target_state based on serial input
+	// Update actual_state based on interrupts
+	// These values will be updated based on other threads
+	// Just use a set value for now
+
 
 	// Update error terms
 	prev_error = error;
@@ -60,5 +64,8 @@ while(1){
 
 	// Set next speed
 	motor.setSpeed(next_speed);
+
+	// Control loop waiting period
+	wait(CONTROL_PERIOD);
 }
 ```
