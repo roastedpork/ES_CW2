@@ -16,7 +16,7 @@ Using Keil uVision 5.0, drivers and install files to be transferred via USB thum
 * Bing - Handle serial input from computer (regex) and expand functionalities
 
 # Timeline
-- [] Set up basic motor control
-- [] Set up serial input
-- [] Write functionalities into threaded code
-- [] TBD
+- [ ] Set up basic motor control
+- [ ] Set up serial input
+- [ ] Write functionalities into threaded code
+- [ ] TBD
