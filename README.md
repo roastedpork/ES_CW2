@@ -1,10 +1,8 @@
-# Architecture
-
-Three main areas to define interfaces:
-
-* Main Motor Controller (Nested PID)
-* Serial Communications with external
-* Interrupt Routines for Encoder
+# Timeline
+- [ ] Set up basic motor control
+- [ ] Set up serial input
+- [ ] Write functionalities into threaded code
+- [ ] TBD
 
 # Pre-requisites
 
@@ -15,15 +13,47 @@ Using Keil uVision 5.0, drivers and install files to be transferred via USB thum
 * JM & Bng - Design a PID controller for position and velocity
 * Bing - Handle serial input from computer (regex) and expand functionalities
 
-# Timeline
-- [ ] Set up basic motor control
-- [ ] Set up serial input
-- [ ] Write functionalities into threaded code
-- [ ] TBD
 
-# PID implementation
+# Architecture
 
-Pseudo-code for PID implenmentation
+Three main areas to define interfaces:
+
+* Main Motor Controller (Nested PID)
+* Serial Communications with external
+* Interrupt Routines for Encoder
+
+These three functionalities will be executed in separate threads (TBC), and there will be predefined resources shared between the threads. 
+We will need to use Mutex and Signals to handle the race conditions. 
+
+## PID implementation
+
+Although the mbed library has a PID implementation, it is slightly difficult to adapt it for our needs. 
+As such we should implement our own PID controller class.
+Recommended to use a nested PID control loop, one for position control and the other for velocity control.
+This arrangement rejects a better amount of disturbances.
+
+```cpp
+class PIDController{
+	public:
+		PIDController(float kp, float kd, float ki);
+		~PIDController();
+
+		void setTarget(float target_state);
+		const int getTarget() const;
+
+		void setTuning(float kp, float kd, float ki);
+		void computeNextOutput(float actual_state, float dt);
+
+	private:
+		float _kp, _kd, _ki;
+		float prev_error;
+		float int_error;
+		float curr_derr;
+		int target_state;	// target 
+}
+```
+
+Example pseudo-code for PID implenmentation:
 
 ```cpp
 
