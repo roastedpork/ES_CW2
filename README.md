@@ -35,17 +35,17 @@ This arrangement rejects a better amount of disturbances.
 ```cpp
 class PIDController{
 	public:
-		PIDController(float kp, float kd, float ki);
+		PIDController(float _kp, float _kd, float _ki);
 		~PIDController();
 
-		void setTarget(float target_state);
+		void setTarget(float _target_state);
 		const int getTarget() const;
 
-		void setTuning(float kp, float kd, float ki);
+		void setTuning(float _kp, float _kd, float _ki);
 		void computeNextOutput(float actual_state, float dt);
 
 	private:
-		float _kp, _kd, _ki;
+		float kp, kd, ki;
 		float prev_error;
 		float int_error;
 		float curr_derr;
