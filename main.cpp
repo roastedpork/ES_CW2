@@ -91,19 +91,16 @@ void motorHome() {
     leadState = (inState+2)%6;
 }
     
+Thread serial_thread;
 
 //Main
 int main() {
-    //Initialise the serial port
-//    message_passing::init();
-    
-//    Serial pc(SERIAL_TX, SERIAL_RX);
-//    pc.baud(115200);
-//    pc.attach(&receiveMessage);
+    //Initialise the serial port    
     serial_comms::init();
     serial_comms::pc.printf("Hello\n\r");
-    serial_comms::getTargets();
-    //
+
+    serial_thread.start(serial_comms::getTargets);    
+    
 //    //Run the motor synchronisation
 //    motorHome();
 //    

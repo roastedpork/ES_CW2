@@ -18,7 +18,7 @@ enum update_t {
 extern Serial pc;
 extern float target_pos;
 extern float target_vel;
-extern bool update;
+extern update_t op_code;
 
 extern void init();
 extern void getTargets();
