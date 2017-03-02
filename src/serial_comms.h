@@ -7,6 +7,14 @@
 
 namespace serial_comms {
 
+enum update_t {
+	OP_NIL = 0,
+	OP_POS = 1,
+	OP_VEL = 2,
+	OP_PV  = 3
+};
+
+
 extern Serial pc;
 extern float target_pos;
 extern float target_vel;

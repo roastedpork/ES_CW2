@@ -8,7 +8,7 @@ namespace serial_comms {
 Serial pc(SERIAL_TX, SERIAL_RX);
 float target_pos;
 float target_vel;
-bool update = false;
+update_t op_code = OP_NIL;
 
 static char buffer[BUFF_SIZE];
 
@@ -20,8 +20,11 @@ static int parseCommand(const int _length){
 	int count = 0;
 	int float_buffer_ind = 0;
 
+	bool update_pos = false;
+	bool update_vel = false;
+
 	// Return error value
-	if (_length <= 0){
+	if (_length <= 1){
 		return 0;
 	}
 	while (count < _length) {
@@ -41,6 +44,8 @@ static int parseCommand(const int _length){
 					target_pos = (float)std::atof(float_buffer);
 					std::memset(float_buffer,0,8);
 					float_buffer_ind = 0;
+					update_pos = true;
+
 				} else if (op_char == 'V'){
 					return 0;
 				} else {
@@ -51,8 +56,12 @@ static int parseCommand(const int _length){
 			case '\r':
 				if(op_char == 'R'){
 					target_pos = (float)std::atof(float_buffer);
+					update_pos = true;
+
 				} else if (op_char == 'V') {
 					target_vel = (float)std::atof(float_buffer);
+					update_vel = true;
+
 				}
 				
 				break;
@@ -62,6 +71,15 @@ static int parseCommand(const int _length){
 				break;
 		}
 	}
+
+	if (update_pos && update_vel){
+		op_code = OP_PV;
+	} else if (update_vel) { 
+		op_code = OP_VEL;
+	} else if (update_pos){
+		op_code = OP_POS;
+	}
+
 
 
 	return 1;
@@ -93,10 +111,9 @@ void getTargets(){
 
 		length = pollSerialIn();
 		if(parseCommand(length)){
-			update = true;
-			pc.printf("target_pos: %f, target_vel %f\n\r",target_pos, target_vel);
+			pc.printf("op_code: %d, target_pos: %f, target_vel %f\n\r", update, target_pos, target_vel);
 		} else {
-			update = false;
+			op_code = OP_NIL;
 		}
 	}
 
