@@ -60,6 +60,7 @@ namespace controller {
 		float v_duty = vController(actual_v, target_v);
 		float p_duty = pController(target_p, actual_p, actual_v, dt);
 
+		// yes, the math works out
 		return (target_v - actual_v > 0) ? p_duty : v_duty;
 	}
 
@@ -72,8 +73,11 @@ namespace controller {
 		Timer control_loop;
 		Timer pos_loop;
 
-		float target_v;
+		float actual_p;
+		float actual_v;
 		float target_p;
+		float target_v;
+		float dt;
 
 		control_loop.start();
 		pos_loop.start();
@@ -97,7 +101,7 @@ namespace controller {
 			switch (curr_op) {
 				case parser::OP_VEL:
 					// Get input from other parts
-					float actual_v = odometer::velocity;
+					actual_v = odometer::velocity;
 
 					// Calculate next step
 					float res = vController(actual_v, target_v);
@@ -106,10 +110,10 @@ namespace controller {
 					break;
 
 				case parser::OP_POS:
-					float actual_p = odometer::position;
+					actual_p = odometer::position;
 					actual_v = odometer::velocity;					
 
-					float dt = pos_loop.read();
+					dt = pos_loop.read();
 					pos_loop.reset();
 
 					// Calculate next step
