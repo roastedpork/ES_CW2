@@ -18,7 +18,7 @@ namespace parser {
 	float tune_period = 0.5;
 	update_t op_code = OP_POS;
 	int tunes_list[TUNE_BUFFER];
-	volatile bool output_ready = false;
+	volatile bool ready[3] = {false, false, false};
 
 	// For Tune setting
 	static const int *note_half_period_map[8];
@@ -35,7 +35,6 @@ namespace parser {
 
 
 	// Parser Functions
-
 	static void serial_isr(){
 		if (pc.readable() && (input_counter < BUFF_SIZE) && (!input_ready)) {
 			input_buffer[input_counter++] = pc.getc();
@@ -63,6 +62,7 @@ namespace parser {
 		uint8_t new_op = 0;
 		float new_pos = 0;
 		float new_vel = 0;
+		float bpm = 60;
 		int new_tunes[TUNE_BUFFER];
 
 		// Checks if string input is empty (except for '\r')
@@ -82,7 +82,7 @@ namespace parser {
 			
 			switch(current_char){
 				case 'R':
-					if ((op_char == 'V') || (op_char == 'R') || (op_char == 'T')) {
+					if ((op_char == 'V') || (op_char == 'R') || (op_char == 'T') || (op_char == 'M')) {
 						return 0;
 					} else {
 						op_char = current_char; 
@@ -97,7 +97,7 @@ namespace parser {
 						float_buffer_ind = 0;
 						new_op |= 0x01;
 
-					} else if ((op_char == 'V') || (op_char == 'T')){
+					} else if ((op_char == 'V') || (op_char == 'T') || (op_char == 'M')){
 						return 0;
 					} else {
 						op_char = current_char; 
@@ -105,10 +105,18 @@ namespace parser {
 					break;
 				
 				case 'T':
-					if ((op_char == 'V') || (op_char == 'R')) {
+					if ((op_char == 'V') || (op_char == 'R') || (op_char == 'M')) {
 						return 0;
 					} else {
 						op_char = current_char; 
+					}
+					break;
+
+				case 'M':
+					if ((op_char == 'V') || (op_char == 'R') || (op_char == 'T') ) {
+						return 0;
+					} else {
+						op_char = current_char;
 					}
 					break;
 
@@ -124,6 +132,9 @@ namespace parser {
 					} else if (op_char == 'T') {
 						new_op |= 0x04;
 
+					} else if (op_char == 'M') {
+						new_tune_period = (float)std::atof(float_buffer);
+						new_op = 5;
 					}
 					
 					break;
@@ -151,15 +162,15 @@ namespace parser {
 							int parsed_note = note_half_period_map[note_buffer[0]][note_buffer[1]];
 							
 							if (parsed_note == 0) {
-								pc.printf("Invalid note\n\r");
+								// pc.printf("Invalid note\n\r");
 								return 0;
 							} 
 							
-							if (note_buffer[1] == 1){
-								pc.printf("parsed note: %c, duration: %d, half_period: %d\n\r", 'A' + note_buffer[0] - 1, reps, parsed_note);				
-							} else {
+							if (note_buffer[1] != 1){
+								// pc.printf("parsed note: %c%c, duration: %d, half_period: %d\n\r", 'A' + note_buffer[0] - 1, temp_char, reps, parsed_note);
 								char temp_char = (note_buffer[1] == 0) ? '^' : '#';
-								pc.printf("parsed note: %c%c, duration: %d, half_period: %d\n\r", 'A' + note_buffer[0] - 1, temp_char, reps, parsed_note);
+							} else {
+								// pc.printf("parsed note: %c, duration: %d, half_period: %d\n\r", 'A' + note_buffer[0] - 1, reps, parsed_note);				
 							}
 
 							for (int i = 0; i < reps; i++){
@@ -200,6 +211,7 @@ namespace parser {
 		if (op_code != OP_NIL){
 			target_pos = new_pos;
 			target_vel = new_vel;
+			tune_period = 60 / bpm;
 			for (int i = 0; i < 16; i++) {
 				tunes_list[i] = new_tunes[i];
 			}
@@ -216,15 +228,10 @@ namespace parser {
 				// pc.printf("strlen: %d, echo: %s\n", length, input_buffer); 
 				
 				if(parseCommand(length)){
-					output_ready = true;
-					if(op_code == OP_TUNE) {
-						pc.printf("Playing a tune, notes listed above\n\r", op_code);
-					} else {
-						pc.printf("op_code: %d, target_pos: %f, target_vel %f\n\r", op_code, target_pos, target_vel);
-
-					}
-				} else {
-					pc.printf("Invalid input\n\r");
+					// Unrolling for faster assignment
+					ready[0] = true;
+					ready[1] = true;
+					ready[2] = true;
 
 				}
 

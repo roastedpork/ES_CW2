@@ -7,6 +7,10 @@
 #define BUFF_SIZE 64
 #define TUNE_BUFFER 64
 
+#define MAIN_INDEX 0
+#define CTRL_INDEX 1
+#define DRVR_INDEX 2
+
 namespace parser {
 
 	enum update_t {
@@ -25,7 +29,7 @@ namespace parser {
 	extern float tune_period;
 	extern update_t op_code;
 	extern int tunes_list[TUNE_BUFFER]; // Buffer of periods, from parsed tune
-	extern volatile bool output_ready;
+	extern volatile bool ready[3]; // 0-> main, 1-> controller, 2-> driver
 
 	extern void init();
 	extern void pollSerialIn();
