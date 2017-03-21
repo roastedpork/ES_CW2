@@ -1,35 +1,34 @@
 #include "mbed.h"
 #include "rtos.h"
-#include "threaded_parser.h"
+#include "motor_controller.h"
+#include "motor_driver.h"
+#include "odometer.h"
+#include "parser.h"
 
-Thread parser_thread;
+Thread controller_thread(osPriorityNormal, 768);
+Thread odometer_thread(osPriorityNormal, 512);
+Thread driver_thread(osPriorityNormal, 1024);
+Thread parser_thread(osPriorityNormal, 640);
 //Main
 int main() {
-    threaded_parser::init();
-
-    parser_thread.start(threaded_parser::pollSerialIn);
-
-    while(1){
-        if (threaded_parser::output_ready){
-            threaded_parser::pc.printf("(Main) pos: %f, vel: %f\n\r", threaded_parser::target_pos, threaded_parser::target_vel);
-            threaded_parser::output_ready = false;
-        }
-    }
-
-    return 0;
-}
-
-
-int main() {
-    odometer::init();
     Serial pc(SERIAL_TX, SERIAL_RX);
-    pc.baud(115200);
-    parser_thread.start(odometer::updateState);
-    Timer t;
-    t.start();
+    pc.baud(9600);
+
+    parser::init();
+    odometer::init();
+    driver::init();
+
+    parser_thread.start(parser::pollSerialIn);
+    odometer_thread.start(odometer::updateState);
+    driver_thread.start(driver::runMotor);
+    controller_thread.start(controller::nextStep);    
+
+    
     while(1){
-        pc.printf("Current position: %f, update rate: %f\n\r", odometer::position, t.read()/odometer::update_count);
-        Thread::wait(1000);
+        // pc.printf("(Driver)   Total: %d, Using: %d, Free: %d\n\r", driver_thread.stack_size(), driver_thread.free_stack(), driver_thread.used_stack());
+        // pc.printf("(Odometer) Total: %d, Using: %d, Free: %d\n\r", odometer_thread.stack_size(), odometer_thread.free_stack(), odometer_thread.used_stack());
+        Thread::wait(100);
+        pc.printf("Velocity %f \n\r", odometer::velocity);
     }
 
     return 0;

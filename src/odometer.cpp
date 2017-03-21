@@ -79,14 +79,21 @@ namespace odometer {
 
 		speedometer_CH.start();
 
+		float velocity_buffer[3]; 	// moving average buffer of 3 periods
+		int ma = 0;					// moving average buffer index 
+
 		while(1) {
 			// Velocity update
 			if (update_speed) {
-				velocity = velocity_CH * 0.25 + velocity * 0.75; // IIR filter for velocity measurement
+				velocity_buffer[ma] = velocity_CH;
 				update_speed = false;
 			} else {
-				velocity *= 0.75;
+				velocity_buffer[ma] = 0;
 			}
+
+			ma = (ma + 1) % 3;
+			velocity = (velocity_buffer[0] + velocity_buffer[1] + velocity_buffer[2]) / 3;
+
 			// Position update
 			if (forwards_dir_hex) {
 				position = deg60_ticks * HEX_RES + CH_ticks * TICK_RES;

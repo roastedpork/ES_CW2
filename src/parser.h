@@ -5,7 +5,7 @@
 #include "rtos.h"
 
 #define BUFF_SIZE 64
-#define TUNE_BUFFER 16
+#define TUNE_BUFFER 64
 
 namespace parser {
 
@@ -15,7 +15,7 @@ namespace parser {
 		OP_VEL = 2,
 		OP_PV  = 3,
 		OP_TUNE = 4,
-		OP_BPM = 5;
+		OP_BPM = 5
 	};
 
 	// extern rtos::Mutex serial_mutex;
@@ -25,9 +25,10 @@ namespace parser {
 	extern float tune_period;
 	extern update_t op_code;
 	extern int tunes_list[TUNE_BUFFER]; // Buffer of periods, from parsed tune
+	extern volatile bool output_ready;
 
 	extern void init();
-	extern void getTargets();
+	extern void pollSerialIn();
 }
 
 #endif

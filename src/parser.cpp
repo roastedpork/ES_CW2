@@ -13,10 +13,10 @@ namespace parser {
 	static volatile bool input_ready = false;
 
 	// Parsed Output to be used by other parts of the code
-	float target_pos;
-	float target_vel;
+	float target_pos = 100;
+	float target_vel = 10;
 	float tune_period = 0.5;
-	update_t op_code = OP_NIL;
+	update_t op_code = OP_POS;
 	int tunes_list[TUNE_BUFFER];
 	volatile bool output_ready = false;
 
@@ -63,7 +63,7 @@ namespace parser {
 		uint8_t new_op = 0;
 		float new_pos = 0;
 		float new_vel = 0;
-		int new_tunes[16];
+		int new_tunes[TUNE_BUFFER];
 
 		// Checks if string input is empty (except for '\r')
 		if (_length <= 1){
@@ -73,7 +73,7 @@ namespace parser {
 		// Initialising buffers
 		std::memset(float_buffer, 0, 8);
 		std::memset(note_buffer, 0, 3);
-		std::memset(tunes_list, 0, 16* sizeof(int));
+		std::memset(tunes_list, 0, TUNE_BUFFER * sizeof(int));
 		note_buffer[1] = 1;
 
 		// Iterating through input_buffer
@@ -146,24 +146,25 @@ namespace parser {
 							(current_char == '3') || (current_char == '4') || 
 							(current_char == '5') || (current_char == '6') || 
 							(current_char == '7') || ( current_char == '8')) {
-							int temp_oct = int(current_char - '0');
+							int reps = int(current_char - '0');
 
 							int parsed_note = note_half_period_map[note_buffer[0]][note_buffer[1]];
 							
-							if (temp_oct > 4) {
-								parsed_note /= (1 << (temp_oct-4));
-							} else if (temp_oct < 4){
-								parsed_note *= (1 << (4-temp_oct)); 
-							}
+							if (parsed_note == 0) {
+								pc.printf("Invalid note\n\r");
+								return 0;
+							} 
 							
 							if (note_buffer[1] == 1){
-								pc.printf("parsed note: %c%d, half_period: %d\n\r", 'A' + note_buffer[0] - 1, temp_oct, parsed_note);				
+								pc.printf("parsed note: %c, duration: %d, half_period: %d\n\r", 'A' + note_buffer[0] - 1, reps, parsed_note);				
 							} else {
 								char temp_char = (note_buffer[1] == 0) ? '^' : '#';
-								pc.printf("parsed note: %c%c%d, half_period: %d\n\r", 'A' + note_buffer[0] - 1, temp_char, temp_oct, parsed_note);
+								pc.printf("parsed note: %c%c, duration: %d, half_period: %d\n\r", 'A' + note_buffer[0] - 1, temp_char, reps, parsed_note);
 							}
 
-							new_tunes[note_count++] = parsed_note;
+							for (int i = 0; i < reps; i++){
+								new_tunes[note_count++] = parsed_note;
+							}
 
 							// Reset buffers
 							std::memset(note_buffer, 0, 3);

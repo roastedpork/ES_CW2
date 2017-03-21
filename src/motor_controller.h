@@ -7,10 +7,8 @@
 #define CTRL_PERIOD 0.05
 
 namespace controller {
-    extern float duty_cycle;
 
-    // extern void driveRotation(float _target);
-    // extern void test(float _target, float _vmax);
+    extern float duty_cycle;
     extern void nextStep();
 }
 
