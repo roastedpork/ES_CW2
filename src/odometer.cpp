@@ -87,12 +87,15 @@ namespace odometer {
 			if (update_speed) {
 				velocity_buffer[ma] = velocity_CH;
 				update_speed = false;
+				ma = (ma + 1) % 3;
+				velocity = (velocity_buffer[0] + velocity_buffer[1] + velocity_buffer[2]) / 3;
 			} else {
 				velocity_buffer[ma] = 0;
+				ma = (ma + 1) % 3;
+				velocity = (velocity_buffer[0] + velocity_buffer[1] + velocity_buffer[2]) / 3;
 			}
 
-			ma = (ma + 1) % 3;
-			velocity = (velocity_buffer[0] + velocity_buffer[1] + velocity_buffer[2]) / 3;
+
 
 			// Position update
 			if (forwards_dir_hex) {
