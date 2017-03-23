@@ -133,12 +133,18 @@ namespace driver {
     void runMotor() {
         Timer loop;
         parser::update_t new_op = parser::OP_NIL;
+        int read_tunes[TUNE_BUFFER];
         loop.start();
         while(1) {
             
             if (parser::ready[DRVR_INDEX]) {
                 // Polls for any updates to the opcode and handles changes appropriately
                 new_op = parser::op_code;
+
+                for (int i= 0; i < TUNE_BUFFER; i++) {
+                	read_tunes[i] = parser::tunes_list[i];
+                }
+
                 parser::ready[DRVR_INDEX] = false;
             }
 
@@ -155,25 +161,26 @@ namespace driver {
                 case parser::OP_TUNE:
                     //play tune
                     for (int i = 0; i < TUNE_BUFFER; i++) {
-                        int half_period = parser::tunes_list[i];
+                        int half_period = read_tunes[i];
                         if (half_period) {
                             playTune(half_period, beat_period * 0.9);
                             Thread::wait(int(beat_period * 100)); // beat_period * 0.1 * 1000ms
-                        } else {
-                            Thread::wait(int(beat_period * 1000));
-                        }            
+                        } 
+                            // else {
+                        //     Thread::wait(int(beat_period * 1000));
+                        // }            
                     }
 
                     break;
                 
                 case parser::OP_NIL:
-                    Thread::wait(PWM_PERIOD);
+                    Thread::wait(1000 * PWM_PERIOD);
                     break;
                 //run PWM for 1 cycle
                 default:
                     drivePWM();
 
-                    float readout = loop.read();
+                    int readout = loop.read_ms();
                     loop.reset();
                     Thread::wait((readout < PWM_PERIOD) ? PWM_PERIOD - readout : 0);
                     break;

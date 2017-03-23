@@ -5,7 +5,7 @@
 // I know I'm treating namespaces as classes, I beg for your mercy if this is sacrilegious
 namespace parser {
     // Serial object
-    RawSerial pc(SERIAL_TX, SERIAL_RX);
+    RawSerial pc(SERIAL_TX, SERIAL_RX,9600);
 
     // Serial Input variables
     static char input_buffer[BUFF_SIZE];
@@ -13,10 +13,10 @@ namespace parser {
     static volatile bool input_ready = false;
 
     // Parsed Output to be used by other parts of the code
-    float target_pos = -256;
-    float target_vel = 10;
+    float target_pos = 0;
+    float target_vel = 0;
     float tune_period = 0.5;
-    update_t op_code = OP_VEL;
+    update_t op_code = OP_NIL;
     int tunes_list[TUNE_BUFFER];
     volatile bool ready[3] =  {true, true, true};//{false, false, false};
 
@@ -74,6 +74,7 @@ namespace parser {
         std::memset(float_buffer, 0, 8);
         std::memset(note_buffer, 0, 3);
         std::memset(tunes_list, 0, TUNE_BUFFER * sizeof(int));
+        std::memset(new_list, 0, TUNE_BUFFER * sizeof(int));
         note_buffer[1] = 1;
 
         // Iterating through input_buffer
@@ -201,6 +202,9 @@ namespace parser {
             case 4:
                 op_code = OP_TUNE;
                 break;
+            case 5:
+                op_code = OP_BPM;
+                break;
             default:
                 op_code = OP_NIL;
                 break;
@@ -240,14 +244,15 @@ namespace parser {
                 input_counter = 0;
             }
 
-            Thread::wait(500);
         }
+        Thread::wait(500);
     }
 
     void init(){
         pc.baud(9600);
         pc.attach(&serial_isr);
-            
+        
+        input_counter = 0;
         note_half_period_map[0] = error; 
         note_half_period_map[1] = A; 
         note_half_period_map[2] = B; 
