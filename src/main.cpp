@@ -5,16 +5,14 @@
 #include "odometer.h"
 #include "parser.h"
 
-// Thread instantiations
-Thread parser_thread(osPriorityNormal, 640);
+Thread parser_thread(osPriorityNormal, 1024);
 Thread odometer_thread(osPriorityNormal, 300);
 Thread controller_thread(osPriorityNormal, 600);
 Thread driver_thread(osPriorityNormal, 400);
 
 //Main
 int main() {
-    Serial pc(SERIAL_TX, SERIAL_RX);
-    pc.baud(9600);
+    RawSerial pc = parser::pc;
 
     parser::init();
     odometer::init();
@@ -22,28 +20,54 @@ int main() {
 
     parser_thread.start(parser::pollSerialIn);
     odometer_thread.start(odometer::updateState);
-    controller_thread.start(controller::nextStep);    
+    controller_thread.start(controller::nextStep);  
     driver_thread.start(driver::runMotor);
     
+    // Variables from parser 
+    parser::update_t read_op;
+    float read_tp;
+    float read_tv;
+    float read_tunep;
+    int read_tunes[TUNE_BUFFER];
+
 
     
     while(1){
-       //  pc.printf("(Parser)     Total: %d, Free: %d, Used: %d(%d)\n\r", 
-       //      parser_thread.stack_size(), parser_thread.free_stack(), 
-       //      parser_thread.used_stack(), parser_thread.max_stack());
-       //  pc.printf("(Odometer)   Total: %d, Free: %d, Used: %d(%d)\n\r", 
-       //      odometer_thread.stack_size(), odometer_thread.free_stack(), 
-       //      odometer_thread.used_stack(), odometer_thread.max_stack());
-       //  pc.printf("(Controller) Total: %d, Free: %d, Used: %d(%d)\n\r", 
-       //     controller_thread.stack_size(), controller_thread.free_stack(), 
-       //     controller_thread.used_stack(), controller_thread.max_stack());
-       //  pc.printf("(Driver)     Total: %d, Free: %d, Used: %d(%d)\n\r", 
-       // driver_thread.stack_size(), driver_thread.free_stack(), 
-       // driver_thread.used_stack(), driver_thread.max_stack());
+        if (parser::ready[MAIN_INDEX]){
+            read_op = parser::op_code;
+            read_tp = parser::target_pos;
+            read_tv = parser::target_vel;
+            read_tunep = parser::tune_period;
+
+            for (int i = 0; i < TUNE_BUFFER; i++) {
+                read_tunes[i] = parser::tunes_list[i];
+            }
+
+            parser::ready[MAIN_INDEX] = false;
+            
+            if (read_op == parser::OP_NIL) {
+                pc.printf("Invalid Input\n\r");
+
+            } else if (read_op == parser::OP_POS) {
+                pc.printf("Target position set to %3.2f\n\r", read_tp);
+
+            } else if (read_op == parser::OP_VEL) {
+                pc.printf("Target velocity set to %3.2f\n\r", read_tv);
+
+            } else if (read_op == parser::OP_PV) {  
+                pc.printf("Target position set to %3.2f\n\r", read_tp);
+                pc.printf("Target velocity set to %3.2f\n\r", read_tv);
+
+            } else if (read_op == parser::OP_TUNE) {
+                pc.printf("Playing a tune~\n\r");
+
+            } else if (read_op == parser::OP_BPM) {
+                pc.printf("Set BPM to %3.2f\n\r", 60/read_tunep);
+
+            } 
+            
+        }            
         Thread::wait(1000);
-        pc.printf("op: %d, target_p: %3.2f, actual_p: %3.2f, target_v: %3.2f, actual_v: %3.2f, duty: %3.2f \n\r", 
-            parser::op_code, parser::target_pos, odometer::position, 
-            parser::target_vel, odometer::velocity, controller::duty_cycle);
     }
 
     return 0;
