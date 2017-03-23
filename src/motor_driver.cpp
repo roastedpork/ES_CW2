@@ -141,8 +141,13 @@ namespace driver {
                 // Polls for any updates to the opcode and handles changes appropriately
                 new_op = parser::op_code;
 
-                for (int i= 0; i < TUNE_BUFFER; i++) {
-                	read_tunes[i] = parser::tunes_list[i];
+                if (new_op == parser::OP_TUNE){
+	                for (int i= 0; i < TUNE_BUFFER; i++) {
+	                	read_tunes[i] = parser::tunes_list[i];
+	                }
+                } else if ((new_op == parser::OP_POS) || (new_op == parser::OP_VEL) || (new_op == parser::OP_PV)) {
+                	motorOut(0);
+                	Thread::wait(STALL_WAIT);
                 }
 
                 parser::ready[DRVR_INDEX] = false;
@@ -165,16 +170,15 @@ namespace driver {
                         if (half_period) {
                             playTune(half_period, beat_period * 0.9);
                             Thread::wait(int(beat_period * 100)); // beat_period * 0.1 * 1000ms
-                        } 
-                            // else {
-                        //     Thread::wait(int(beat_period * 1000));
-                        // }            
+                        } else {
+                            Thread::wait(int(beat_period * 1000));
+                        }            
                     }
 
                     break;
                 
                 case parser::OP_NIL:
-                    Thread::wait(1000 * PWM_PERIOD);
+                    Thread::wait(PWM_PERIOD_MS);
                     break;
                 //run PWM for 1 cycle
                 default:
@@ -182,7 +186,7 @@ namespace driver {
 
                     int readout = loop.read_ms();
                     loop.reset();
-                    Thread::wait((readout < PWM_PERIOD) ? PWM_PERIOD - readout : 0);
+                    Thread::wait((readout < PWM_PERIOD_MS) ? PWM_PERIOD_MS - readout : 0);
                     break;
             }
 

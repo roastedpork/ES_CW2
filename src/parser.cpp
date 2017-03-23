@@ -18,7 +18,7 @@ namespace parser {
     float tune_period = 0.5;
     update_t op_code = OP_NIL;
     int tunes_list[TUNE_BUFFER];
-    volatile bool ready[3] =  {true, true, true};//{false, false, false};
+    volatile bool ready[4] =  {true, true, true, true};//{false, false, false};
 
     // For Tune setting
     static const int *note_half_period_map[8];

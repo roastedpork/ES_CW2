@@ -12,8 +12,12 @@
 #define L3Lpin D9			//0x10
 #define L3Hpin D10			//0x20
 
-#define PWM_PERIOD 	0.050 // 20Hz PWM
-#define PWM_TICK 	0.0005 // 100 ticks give a full period
+
+#define STALL_WAIT		3000 	// wait for 3s whenever changing to a POS/VEL/PV opcode
+#define PWM_PERIOD 		0.020 	// 50Hz PWM
+#define PWM_PERIOD_MS	20 		// 50Hz PWM
+#define PWM_TICK 		0.0002 	// 100 ticks give a full period
+#define PWM_TICK_US		200 	// 100 ticks give a full period
 
 namespace driver {
 

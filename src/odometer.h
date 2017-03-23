@@ -17,6 +17,8 @@
 #define TICK_RES 8.547e-03
 #define HEX_RES 0.166666667
 
+#define ODMT_PERIOD_MS 10
+
 namespace odometer {
 	extern InterruptIn I1;
 	extern InterruptIn I2;

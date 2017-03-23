@@ -29,6 +29,7 @@ int main() {
     float read_tv;
     float read_ap;
     float read_av;
+    float read_duty;
     float read_tunep;
     int read_tunes[TUNE_BUFFER];
 
@@ -80,8 +81,9 @@ int main() {
 
         read_ap = odometer::position;
         read_av = odometer::velocity;
+        read_duty = controller::duty_cycle;
 
-        pc.printf("P: %3.2f, V: %3.2f\n\r", read_ap, read_av);
+        pc.printf("P: %3.2f, V: %3.2f, D: %3.2f\n\r", read_ap, read_av, read_duty);
         Thread::wait(1000);
     }
 

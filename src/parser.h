@@ -8,8 +8,9 @@
 #define TUNE_BUFFER 64
 
 #define MAIN_INDEX 0
-#define CTRL_INDEX 1
-#define DRVR_INDEX 2
+#define ODMT_INDEX 1
+#define CTRL_INDEX 2
+#define DRVR_INDEX 3
 
 namespace parser {
 
@@ -29,7 +30,7 @@ namespace parser {
 	extern float tune_period;
 	extern update_t op_code;
 	extern int tunes_list[TUNE_BUFFER]; // Buffer of periods, from parsed tune
-	extern volatile bool ready[3]; // 0-> main, 1-> controller, 2-> driver
+	extern volatile bool ready[4]; // 0-> main, 2-> controller, 3-> driver
 
 	extern void init();
 	extern void pollSerialIn();

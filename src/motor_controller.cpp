@@ -127,9 +127,9 @@ namespace controller {
 
             duty_cycle = res;
 
-            int readout = control_loop.read() * 1000;
+            int readout = control_loop.read_ms();
             control_loop.reset();
-            Thread::wait((readout < 20) ? (20 - readout) : 0);
+            Thread::wait((readout < CTRL_PERIOD_MS) ? (CTRL_PERIOD_MS - readout) : 0);
                 
         }
     }

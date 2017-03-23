@@ -4,7 +4,8 @@
 #include "mbed.h"
 #include "rtos.h"
 
-#define CTRL_PERIOD 0.05
+#define CTRL_PERIOD 	0.02 	//50Hz
+#define CTRL_PERIOD_MS 	20		//50Hz
 
 namespace controller {
 

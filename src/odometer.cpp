@@ -81,19 +81,35 @@ namespace odometer {
 
 		float velocity_buffer[3]; 	// moving average buffer of 3 periods
 		int ma = 0;					// moving average buffer index 
+		parser::update_t curr_op = parser::OP_NIL;
+
 
 		while(1) {
+
+			if (parser::ready[ODMT_INDEX]){
+				curr_op = parser::op_code;
+				parser::ready[ODMT_INDEX] = false;
+
+				// unlock mutex here
+
+				if ((curr_op == parser::OP_POS) || (curr_op == parser::OP_VEL) || (curr_op == parser::OP_PV)) {
+					Thread::wait(STALL_WAIT);
+					deg60_ticks = 0;
+					CH_ticks = 0;
+					velocity_buffer[0] = 0;
+					velocity_buffer[1] = 0;
+					velocity_buffer[2] = 0;
+				}
+			}
 			// Velocity update
 			if (update_speed) {
 				velocity_buffer[ma] = velocity_CH;
 				update_speed = false;
-				ma = (ma + 1) % 3;
-				velocity = (velocity_buffer[0] + velocity_buffer[1] + velocity_buffer[2]) / 3;
 			} else {
 				velocity_buffer[ma] = 0;
-				ma = (ma + 1) % 3;
-				velocity = (velocity_buffer[0] + velocity_buffer[1] + velocity_buffer[2]) / 3;
 			}
+			ma = (ma + 1) % 3;
+			velocity = (velocity_buffer[0] + velocity_buffer[1] + velocity_buffer[2]) / 3;
 
 
 
@@ -104,13 +120,13 @@ namespace odometer {
 				position = (deg60_ticks + 1) * HEX_RES + CH_ticks * TICK_RES;
 			}
 
-			Thread::wait(10);
+			Thread::wait(ODMT_PERIOD_MS);
 		}
 	}
 
 	// Motor initialisation functions
 	void init() {
-		prev_motor_state = 0;//motor::motorHome();
+		prev_motor_state = 2;//motor::motorHome() is called by driver::init()
 
 		I1.rise(&I_isr);
 		I1.fall(&I_isr);
