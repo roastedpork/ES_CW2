@@ -15,38 +15,36 @@ namespace controller {
 
 	// Position and velocity control variables
 	static float error = 0;
-	static float prev_error = 0;
 	static float error_int = 0;
-	static float error_delta = 0;
 
 	static float pos_k = 100;
 	static float pos_kp = 1;
 	static float pos_kv = -0.75;
-	// static float pos_kd = 0.012;
-	// static float pos_ki = 0.025;
+
+	static float vel_k = 10;
+	static float vel_kp = 1;
+	static float vel_ki = 0.005;
 
 	static parser::update_t curr_op = parser::OP_NIL;
 
 	// Control functions which calculate the next duty cycle value
-	static float vController(const float target_v, const float actual_v){
-		float step = 0.2;
+	static float vController(const float target_v, const float actual_v, float dt){
+		float prev_error = error;
 		error = target_v - actual_v;
+		error_int += (error + prev_error) / 2 * dt;
 
-		float res = (error > 0) ? duty_cycle - step : duty_cycle + step;
+		float n = vel_kp * error + vel_ki * error_int; // pos_kd * error_delta; + pos_ki * error_int;
+		float res = vel_k * n;
 		res = (res > 100) ? 100 : res;
 		res = (res < -100) ? -100 : res;
-
 		return res;
 	}
 
-	static float pController(const float target_p, const float actual_p, const float actual_v, const float dt){
+	static float pController(const float target_p, const float actual_p, const float actual_v){
 
-		// prev_error = error;
 		error = target_p - actual_p;
-		// error_delta = (error - prev_error) / dt;
-		// error_int += (error + prev_error) / 2 * dt;
 
-		float n = pos_kp * error + pos_kv * actual_v; // pos_kd * error_delta; + pos_ki * error_int;
+		float n = pos_kp * error + pos_kv * actual_v; 
 		float res = pos_k * n;
 
 		res = (res > 100) ? 100 : res;
@@ -56,13 +54,13 @@ namespace controller {
 	}
 
 	static float pvController(const float target_p, const float actual_p, const float target_v, const float actual_v, const float dt){
-		
-		float v_duty = vController(actual_v, target_v);
-		float p_duty = pController(target_p, actual_p, actual_v, dt);
+        
+        float v_duty = vController(actual_v, target_v, dt);
+        float p_duty = pController(target_p, actual_p, actual_v);
 
-		// yes, the math works out
-		return (target_v - actual_v > 0) ? p_duty : v_duty;
-	}
+        // yes, the math works out
+        v_duty = (p_duty > 0) ? std::abs(v_duty) : -std::abs(v_duty);
+        return (target_v - std::abs(actual_v) > 0) ? p_duty : v_duty;
 
 	static void reset(){
 
@@ -103,27 +101,27 @@ namespace controller {
 					// Get input from other parts
 					actual_v = odometer::velocity;
 
+					dt = pos_loop.read();
+					pos_loop.reset();
+				
 					// Calculate next step
-					float res = vController(actual_v, target_v);
+					float res = vController(target_v, actual_v, dt);
 
 					duty_cycle = res;
 					break;
 
 				case parser::OP_POS:
 					actual_p = odometer::position;
-					actual_v = odometer::velocity;					
-
-					dt = pos_loop.read();
-					pos_loop.reset();
+					actual_v = odometer::velocity;				  
 
 					// Calculate next step
-					res = pController(target_p, actual_p, actual_v, dt);
+					res = pController(target_p, actual_p, actual_v);
 
 					duty_cycle = res;
 					break;
 
 				case parser::OP_PV:
-					actual_v = odometer::velocity;					
+					actual_v = odometer::velocity;				  
 					actual_p = odometer::position;
 
 					dt = pos_loop.read();
