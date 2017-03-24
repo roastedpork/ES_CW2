@@ -55,8 +55,7 @@ namespace controller {
     }
 
     static float pvController(const float target_p, const float actual_p, const float target_v, const float actual_v, const float dt){
-        float t_v = (target_p > 0) ? target_v : -target_v;
-        float v_duty = vController(t_v,  actual_v, dt);
+        float v_duty = vController(target_v, std::abs(actual_v), dt);
         float p_duty = pController(target_p, actual_p, actual_v);
 
 //        v_duty = (target_p > 0) ? std::abs(v_duty) : -std::abs(v_duty);

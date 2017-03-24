@@ -24,6 +24,9 @@ namespace odometer {
 	extern InterruptIn I2;
 	extern InterruptIn I3;
 
+	extern int debug_a;
+	extern int debug_b;
+
 	extern float position;
 	extern float velocity;
 	extern rtos::Mutex odometer_mutex;

@@ -13,9 +13,12 @@
 #define L3Lpin D9			//0x10
 #define L3Hpin D10			//0x20
 
+
+#define LOW_SPEED_PWM_PERIOD 0.01
+#define SPEED_THRESH 15
 #define STALL_WAIT 	5000
-#define PWM_PERIOD 	0.02 // 20Hz PWM
-#define PWM_TICK 	0.0002 // 100 ticks give a full period
+#define PWM_PERIOD 	0.005 // 20Hz PWM
+#define PWM_TICK 	0.0005 // 100 ticks give a full period
 
 namespace driver {
 

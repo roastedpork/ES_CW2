@@ -9,6 +9,7 @@ namespace odometer {
 	static const int8_t stateMap[] = {0x07,0x05,0x03,0x04,0x01,0x00,0x02,0x07};  
 
 	static const int8_t forwards[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x00, 0x07, 0x07};
+	static const int8_t reverse[] = {0x05, 0x00, 0x01, 0x02, 0x03, 0x04, 0x07, 0x07};
 
 	// Photointerrupter input pins
 	InterruptIn I1(I1pin);
@@ -34,6 +35,10 @@ namespace odometer {
 	static float velocity_CH = 0;
 	static volatile bool update_speed = false;
 
+	// debug variables
+	int debug_a = 0;
+	int debug_b = 0;
+
 	// Position and Velocity variables to be used by other parts of the code
 	float position = 0;
 	float velocity = 0;
@@ -52,7 +57,7 @@ namespace odometer {
 		if(forwards[prev_motor_state] == current_motor_state){
 			deg60_ticks++;
 			forwards_dir_hex = true;
-		} else if (prev_motor_state != current_motor_state){
+		} else if (reverse[prev_motor_state] == current_motor_state){
 			deg60_ticks--;
 			forwards_dir_hex = false;
 		}
@@ -99,8 +104,8 @@ namespace odometer {
 					deg60_ticks = 0;
 					CH_ticks = 0;
 					velocity_buffer[0] = 0;
-					velocity_buffer[1] = 0;
 					velocity_buffer[2] = 0;
+					velocity_buffer[1] = 0;
 				}
 			}
 			// Velocity update
@@ -122,6 +127,9 @@ namespace odometer {
 				position = (deg60_ticks + 1) * HEX_RES + CH_ticks * TICK_RES;
 			}
 			odometer_mutex.unlock();
+
+			debug_a = deg60_ticks;
+			debug_b = CH_ticks;
 			Thread::wait(ODMT_PERIOD_MS);
 		}
 	}

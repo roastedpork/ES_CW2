@@ -8,7 +8,7 @@
 #define CTRL_PERIOD_MS 	20		//50Hz
 
 namespace controller {
-
+	extern rtos::Mutex controller_mutex;
     extern float duty_cycle;
     extern void nextStep();
 }

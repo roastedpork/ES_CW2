@@ -47,15 +47,16 @@ int main() {
     pc.printf("\n\rINSTRUCTIONS\n\r");
     pc.printf("===================================================\n\r");
 
-    pc.printf("R<value> to set rotations\n\r");
-    pc.printf("V<value> to set velocity\n\r");
-    pc.printf("R<val1>V<val2> to set rotations with a max velocity\n\r");
-    pc.printf("T(<note><duration>){1,16} to play a tune\n\r");
-    pc.printf("M<value> to set tempo (BPM)\n\r");
+    pc.printf("Rotation             : R<value>\n\r");
+    pc.printf("Velocity             : V<value>\n\r");
+    pc.printf("Rotation & Velocity  : R<value>V<value>\n\r");
+    pc.printf("Tune Playing         : T(<note><duration>){1,16}\n\r");
+    pc.printf("Set tempo (in BPM)   : M<value>\n\r");
     
     pc.printf("===================================================\n\r");
     pc.printf("A readout of the current position and velocity\n\r");
-    pc.printf("will be displayed when the motor is set to rotate.\n\r");
+    pc.printf("will be displayed every second when the motor\n\r");
+    pc.printf("is set to rotate.\n\r");
 
     while(1){
         // pc.printf("    MAX / ALLOC \n\r");
@@ -115,6 +116,7 @@ int main() {
             pc.printf("P: %3.2f, V: %3.2f, D: %3.2f\n\r", read_ap, read_av, read_duty);
         }
 
+        pc.printf("(O) 60_ticks: %d, CH_ticks: %d\n\r", odometer::debug_a, odometer::debug_b);
         // pc.printf("(D) from parser: %d, op_new: %d, op_curr: %d, counter: %d\n\r", parser::op_code, driver::debug_new_op, driver::debug_curr_op, driver::debug_int);
         Thread::wait(1000);
     }

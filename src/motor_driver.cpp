@@ -14,12 +14,12 @@ namespace driver {
     static const int8_t stateMap[] = {0x07,0x05,0x03,0x04,0x01,0x00,0x02,0x07};  
 
     //Digital Motor Drive outputs
-    static DigitalOut L1L(L1Lpin); 
-    static DigitalOut L1H(L1Hpin);
-    static DigitalOut L2L(L2Lpin);
-    static DigitalOut L2H(L2Hpin);
-    static DigitalOut L3L(L3Lpin);
-    static DigitalOut L3H(L3Hpin);
+    static PwmOut L1L(L1Lpin); 
+    static PwmOut L1H(L1Hpin);
+    static PwmOut L2L(L2Lpin);
+    static PwmOut L2H(L2Hpin);
+    static PwmOut L3L(L3Lpin);
+    static PwmOut L3H(L3Hpin);
 
     // Variables for PWM controllers
     static int PWM_counter = 0;
@@ -48,7 +48,7 @@ namespace driver {
     static float beat_period = 0.5;
     
     //Set a given drive state
-    static void motorOut(int8_t driveState){
+    static void motorOut(int8_t driveState, float pwm_value){
         
         //Lookup the output byte from the drive state.
         int8_t driveOut = driveTable[driveState & 0x07];
@@ -64,11 +64,11 @@ namespace driver {
         if (ndriveOut & 0x20) L3H = 1;
         
         //Then turn on
-        if (driveOut & 0x01) L1L = 1;
+        if (driveOut & 0x01) L1L = pwm_value;
         if (driveOut & 0x02) L1H = 0;
-        if (driveOut & 0x04) L2L = 1;
+        if (driveOut & 0x04) L2L = pwm_value;
         if (driveOut & 0x08) L2H = 0;
-        if (driveOut & 0x10) L3L = 1;
+        if (driveOut & 0x10) L3L = pwm_value;
         if (driveOut & 0x20) L3H = 0;   
     }
         
@@ -79,7 +79,7 @@ namespace driver {
     }
 
     static int8_t motorHome(){
-        motorOut(0);
+        motorOut(0, 1);
         wait(1);
         return readRotorState();    
     }
@@ -102,19 +102,43 @@ namespace driver {
         debug_f = duration;
 
         while (beat.read() < duration) {
-            motorOut(0);
+            motorOut(0, 1);
             Thread::wait(half_period);
-            motorOut(1);
+            motorOut(1, 1);
             Thread::wait(half_period);
         }
     }
 
-    static void drivePWM(){
-        //Timer pwm_timer;
-        float duty_cycle = controller::duty_cycle;
-        int8_t delta = (duty_cycle > 0) ? 2 : -2;
+    static void lowSpeedPWM() {
+        controller::controller_mutex.lock();
+		float duty_cycle = controller::duty_cycle;
+        controller::controller_mutex.unlock();
 
-        duty_cycle = std::abs(duty_cycle);
+        int8_t delta = (duty_cycle > 0) ? 2 : -2;
+    	duty_cycle = std::abs(duty_cycle)/ 100;
+
+    	Timer slowpwm;
+    	slowpwm.start();
+
+    	while(slowpwm.read() < LOW_SPEED_PWM_PERIOD) {
+			curr_state = readRotorState();
+
+			if(curr_state != prev_state) {
+				prev_state = curr_state;
+				motorOut((curr_state - base_state + delta + 6) % 6, duty_cycle);
+			}
+		}
+    }
+
+    static void highSpeedPWM(){
+
+        controller::controller_mutex.lock();
+		float duty_cycle = controller::duty_cycle;
+        controller::controller_mutex.unlock();
+    
+        int8_t delta = (duty_cycle > 0) ? 2 : -2;
+    	duty_cycle = std::abs(duty_cycle);
+
         do_pwm = true;
 
         pwm_ticker.attach(&pwm_isr, PWM_TICK);
@@ -122,12 +146,11 @@ namespace driver {
         // pwm_timer.start();
 
         while(do_pwm){
-            //pwm_timer.reset();
             curr_state = readRotorState();
 
             if((PWM_counter < duty_cycle) && (curr_state != prev_state)){
                 prev_state = curr_state;
-                motorOut((curr_state - base_state + delta +6 ) %6);
+                motorOut((curr_state - base_state + delta + 6) % 6, 1);
             }
         }
 
@@ -174,7 +197,7 @@ namespace driver {
             if (curr_op == parser::OP_TUNE){
             		int8_t state = readRotorState();
             		if (state != base_state){
-            			motorOut(0);
+            			motorOut(0, 1);
             			Thread::wait(STALL_WAIT);
             		}
                     for (int i = 0; i < TUNE_BUFFER; i++) {
@@ -191,10 +214,18 @@ namespace driver {
                 Thread::wait(PWM_PERIOD);
 
             } else if ((curr_op == parser::OP_POS) || (curr_op == parser::OP_VEL) ||  (curr_op == parser::OP_PV)) {
-                    drivePWM();
-                    float readout = loop.read();
-                    loop.reset();
-                    Thread::wait((readout < PWM_PERIOD) ? PWM_PERIOD - readout : 0);
+                    odometer::odometer_mutex.lock();
+                    float curr_v = odometer::velocity;
+                    odometer::odometer_mutex.unlock();
+
+                    if (curr_v < SPEED_THRESH){
+                    	lowSpeedPWM();
+                    } else {
+	                    highSpeedPWM();
+	                    float readout = loop.read();
+	                    loop.reset();
+	                    Thread::wait((readout < PWM_PERIOD) ? PWM_PERIOD - readout : 0);
+                    }
             } 
 
             debug_new_op = new_op;
@@ -208,5 +239,12 @@ namespace driver {
         base_state = motorHome();
         curr_state = base_state;
         prev_state = (base_state - 1) % 6;
+
+		L1L.period(LOW_SPEED_PWM_PERIOD); 
+		L1H.period(LOW_SPEED_PWM_PERIOD);
+		L2L.period(LOW_SPEED_PWM_PERIOD);
+		L2H.period(LOW_SPEED_PWM_PERIOD);
+		L3L.period(LOW_SPEED_PWM_PERIOD);
+		L3H.period(LOW_SPEED_PWM_PERIOD);
     }
 }
