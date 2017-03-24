@@ -94,18 +94,29 @@ namespace driver {
         do_pwm = false;
     }
 
+    static void setPWMPeriod(float _p) {
+		L1L.period(_p); 
+		L1H.period(_p);
+		L2L.period(_p);
+		L2H.period(_p);
+		L3L.period(_p);
+		L3H.period(_p);
+    }
+
     static void playTune(int half_period, float duration){
+        float period_s = half_period / 500;
+        setPWMPeriod(period_s);
         Timer beat;
         beat.start();
 
-        debug_int = half_period;
-        debug_f = duration;
-
+        // debug_int = half_period;
+        // debug_f = duration;
+        motorOut(0,0.03);
         while (beat.read() < duration) {
-            motorOut(0, 1);
-            Thread::wait(half_period);
-            motorOut(1, 1);
-            Thread::wait(half_period);
+            // motorOut(0, 1);
+            // Thread::wait(half_period);
+            // motorOut(1, 1);
+            // Thread::wait(half_period);
         }
     }
 
@@ -185,8 +196,9 @@ namespace driver {
                 } else if (new_op == parser::OP_VEL) {
                 	prev_state = (curr_state - 1) % 6;
                 }
-
                 parser::ready[DRVR_INDEX] = false;
+
+                setPWMPeriod(LOW_SPEED_PWM_PERIOD);
             }
 
 			if (new_op != parser::OP_NIL) {
@@ -205,8 +217,8 @@ namespace driver {
                         int reps = read_durations[i];
                         if (half_period) {
                         for (int j = 0; j < reps; j++){
-	                            playTune(half_period, beat_period * 0.9);
-	                            Thread::wait(int(beat_period * 100)); // beat_period * 0.1 * 1000ms
+	                            playTune(half_period, beat_period);// * 0.9);
+	                            // Thread::wait(int(beat_period * 100)); // beat_period * 0.1 * 1000ms
                     		} 
                         }
                     }
@@ -222,14 +234,12 @@ namespace driver {
                     	lowSpeedPWM();
                     } else {
 	                    highSpeedPWM();
-	                    float readout = loop.read();
-	                    loop.reset();
-	                    Thread::wait((readout < PWM_PERIOD) ? PWM_PERIOD - readout : 0);
+
                     }
             } 
 
-            debug_new_op = new_op;
-            debug_curr_op = curr_op;
+            // debug_new_op = new_op;
+            // debug_curr_op = curr_op;
 
         }
     }
@@ -240,11 +250,6 @@ namespace driver {
         curr_state = base_state;
         prev_state = (base_state - 1) % 6;
 
-		L1L.period(LOW_SPEED_PWM_PERIOD); 
-		L1H.period(LOW_SPEED_PWM_PERIOD);
-		L2L.period(LOW_SPEED_PWM_PERIOD);
-		L2H.period(LOW_SPEED_PWM_PERIOD);
-		L3L.period(LOW_SPEED_PWM_PERIOD);
-		L3H.period(LOW_SPEED_PWM_PERIOD);
+		setPWMPeriod(LOW_SPEED_PWM_PERIOD);
     }
 }

@@ -18,13 +18,13 @@ namespace controller {
     static float error_v = 0;
     static float error_int = 0;
 
-    static const float pos_k = 100;
-    static const float pos_kp = 1;
-    static const float pos_kv = -0.75;
+    static const float pos_k = 75;
+    static const float pos_kp = 0.75;
+    static const float pos_kv = -1.2;
 
     static const float vel_k = 1.25;
     static const float vel_kp = 1.5;
-    static const float vel_ki = 0.45;
+    static const float vel_ki = 0.25;
 
     static parser::update_t curr_op = parser::OP_NIL;
 

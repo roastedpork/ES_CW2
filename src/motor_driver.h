@@ -17,7 +17,7 @@
 #define LOW_SPEED_PWM_PERIOD 0.01
 #define SPEED_THRESH 15
 #define STALL_WAIT 	5000
-#define PWM_PERIOD 	0.005 // 20Hz PWM
+#define PWM_PERIOD 	0.005 // 200Hz PWM
 #define PWM_TICK 	0.0005 // 100 ticks give a full period
 
 namespace driver {
