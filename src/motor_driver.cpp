@@ -120,11 +120,8 @@ namespace driver {
 
             if((PWM_counter < duty_cycle) && (curr_state != prev_state)){
                 prev_state = curr_state;
-                motorOut((curr_state-base_state+delta+6)%6);
+                motorOut((curr_state - base_state + delta +6 ) %6);
             }
-
-            // float readout = pwm_timer.read();
-            // Thread::wait((readout < PWM_TICK) ? PWM_TICK - readout : 0);
         }
 
         pwm_ticker.detach();
@@ -141,13 +138,20 @@ namespace driver {
                 // Polls for any updates to the opcode and handles changes appropriately
                 new_op = parser::op_code;
 
+
                 if (new_op == parser::OP_TUNE){
 	                for (int i= 0; i < TUNE_BUFFER; i++) {
 	                	read_tunes[i] = parser::tunes_list[i];
 	                }
-                } else if ((new_op == parser::OP_POS) || (new_op == parser::OP_VEL) || (new_op == parser::OP_PV)) {
+                } else if ((new_op == parser::OP_POS)  || (new_op == parser::OP_PV)) {
+                	float target = parser::target_pos;
                 	motorOut(0);
+                	prev_state = (target > 0) ? ((curr_state - 1) % 6): ((curr_state + 1) % 6);
                 	Thread::wait(STALL_WAIT);
+                } else if (new_op == parser::OP_VEL) {
+                	motorOut(0);
+                	prev_state = (curr_state - 1) % 6;
+                	Thread::wait(STALL_WAIT); 
                 }
 
                 parser::ready[DRVR_INDEX] = false;
@@ -178,15 +182,15 @@ namespace driver {
                     break;
                 
                 case parser::OP_NIL:
-                    Thread::wait(PWM_PERIOD_MS);
+                    // Thread::wait(PWM_PERIOD_MS);
                     break;
                 //run PWM for 1 cycle
                 default:
                     drivePWM();
 
-                    int readout = loop.read_ms();
-                    loop.reset();
-                    Thread::wait((readout < PWM_PERIOD_MS) ? PWM_PERIOD_MS - readout : 0);
+                    // int readout = loop.read_ms();
+                    // loop.reset();
+                    // Thread::wait((readout < PWM_PERIOD_MS) ? PWM_PERIOD_MS - readout : 0);
                     break;
             }
 
