@@ -24,15 +24,12 @@ int main() {
     driver_thread.start(driver::runMotor);
     
     // Variables from parser 
-    parser::update_t read_op;
+    parser::update_t read_op = parser::OP_NIL;
     float read_tp;
     float read_tv;
-<<<<<<< HEAD
     float read_ap;
     float read_av;
     float read_duty;
-=======
->>>>>>> parent of 20ab9c2... more to do
     float read_tunep;
     int read_tunes[TUNE_BUFFER];
 
@@ -73,15 +70,14 @@ int main() {
             } 
             
         }            
-<<<<<<< HEAD
 
-        read_ap = odometer::position;
-        read_av = odometer::velocity;
-        read_duty = controller::duty_cycle;
 
-        pc.printf("P: %3.2f, V: %3.2f, D: %3.2f\n\r", read_ap, read_av, read_duty);
-=======
->>>>>>> parent of 20ab9c2... more to do
+        if ((read_op == parser::OP_POS) ||(read_op == parser::OP_VEL) || (read_op == parser::OP_PV)){
+            read_ap = odometer::position;
+            read_av = odometer::velocity;
+            read_duty = controller::duty_cycle;
+            pc.printf("P: %3.2f, V: %3.2f, D: %3.2f\n\r", read_ap, read_av, read_duty);
+        }
         Thread::wait(1000);
     }
 

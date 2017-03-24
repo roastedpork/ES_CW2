@@ -13,12 +13,12 @@ namespace parser {
     static volatile bool input_ready = false;
 
     // Parsed Output to be used by other parts of the code
-    float target_pos = -256;
-    float target_vel = 10;
+    float target_pos = 0;
+    float target_vel = 0;
     float tune_period = 0.5;
-    update_t op_code = OP_VEL;
+    update_t op_code = OP_NIL;
     int tunes_list[TUNE_BUFFER];
-    volatile bool ready[4] =  {true, true, true, true};//{false, false, false};
+    volatile bool ready[4] =  {false, false, false, false};//{true, true, true, true};//{false, false, false};
 
     // For Tune setting
     static const int *note_half_period_map[8];
@@ -200,6 +200,9 @@ namespace parser {
                 break;
             case 4:
                 op_code = OP_TUNE;
+                break;
+            case 5:
+                op_code = OP_BPM;
                 break;
             default:
                 op_code = OP_NIL;

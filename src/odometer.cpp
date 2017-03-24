@@ -1,3 +1,4 @@
+#include "parser.h"
 #include "odometer.h"
 #include "motor_driver.h"
 
@@ -93,7 +94,7 @@ namespace odometer {
 				// unlock mutex here
 
 				if ((curr_op == parser::OP_POS) || (curr_op == parser::OP_VEL) || (curr_op == parser::OP_PV)) {
-					Thread::wait(STALL_WAIT);
+					// Thread::wait(STALL_WAIT);
 					deg60_ticks = 0;
 					CH_ticks = 0;
 					velocity_buffer[0] = 0;
