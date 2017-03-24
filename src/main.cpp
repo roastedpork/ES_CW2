@@ -5,26 +5,29 @@
 #include "odometer.h"
 #include "parser.h"
 
-Thread parser_thread(osPriorityNormal, 1024);
+Thread parser_thread(osPriorityNormal, 850);
 Thread odometer_thread(osPriorityNormal, 300);
-Thread controller_thread(osPriorityNormal, 600);
-Thread driver_thread(osPriorityNormal, 400);
+Thread controller_thread(osPriorityNormal, 400);
+Thread driver_thread(osPriorityNormal, 700);
 
 //Main
 int main() {
     RawSerial pc = parser::pc;
 
+    pc.printf("\n\rInitializing Code...\n\r");
     parser::init();
     odometer::init();
     driver::init();
 
+    pc.printf("Initializing Threads...\n\r");
     parser_thread.start(parser::pollSerialIn);
     odometer_thread.start(odometer::updateState);
     controller_thread.start(controller::nextStep);  
     driver_thread.start(driver::runMotor);
     
     // Variables from parser 
-    parser::update_t read_op = parser::OP_NIL;
+    parser::update_t read_op;
+    parser::update_t driver_op;
     float read_tp;
     float read_tv;
     float read_ap;
@@ -34,8 +37,24 @@ int main() {
     int read_tunes[TUNE_BUFFER];
 
 
+    pc.printf("\n\rMotor ready!\n\r");
+    pc.printf("\n\rINSTRUCTIONS\n\r");
+    pc.printf("===================================================\n\r");
+
+    pc.printf("R<value> to set rotations\n\r");
+    pc.printf("V<value> to set velocity\n\r");
+    pc.printf("R<val1>V<val2> to set rotations with a max velocity\n\r");
+    pc.printf("T(<note><duration>){1,16} to play a tune\n\r");
+    pc.printf("M<value> to set tempo (BPM)\n\r");
     
     while(1){
+        // pc.printf("    MAX / ALLOC \n\r");
+        // pc.printf("(P) %3d / %3d   \n\r", parser_thread.max_stack(), parser_thread.stack_size());
+        // pc.printf("(O) %3d / %3d   \n\r", odometer_thread.max_stack(), odometer_thread.stack_size());
+        // pc.printf("(C) %3d / %3d   \n\r", controller_thread.max_stack(), controller_thread.stack_size());
+        // pc.printf("(D) %3d / %3d   \n\r", driver_thread.max_stack(), driver_thread.stack_size());
+
+
         if (parser::ready[MAIN_INDEX]){
             read_op = parser::op_code;
             read_tp = parser::target_pos;
@@ -70,9 +89,14 @@ int main() {
             } 
             
         }            
+        
 
 
         if ((read_op == parser::OP_POS) ||(read_op == parser::OP_VEL) || (read_op == parser::OP_PV)){
+            driver_op = read_op;
+        } 
+
+        if ((driver_op <= 2) && (driver_op >= 0)){
             read_ap = odometer::position;
             read_av = odometer::velocity;
             read_duty = controller::duty_cycle;

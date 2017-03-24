@@ -29,8 +29,11 @@ namespace driver {
     static volatile bool do_pwm = false;
 
 
-    // Serial output for debugging
-    static Serial debug(SERIAL_TX, SERIAL_RX, 9600);    
+    // output for debugging
+    int debug_int = 0; 
+	extern float debug_f = 0;
+	extern parser::update_t debug_curr_op = parser::OP_NIL;
+	extern parser::update_t debug_new_op = parser::OP_NIL;
 
     // state sync value
     static volatile int8_t base_state;  
@@ -130,6 +133,7 @@ namespace driver {
     void runMotor() {
         Timer loop;
         parser::update_t new_op = parser::OP_NIL;
+        int read_tunes[TUNE_BUFFER];
         loop.start();
         while(1) {
             
@@ -145,11 +149,11 @@ namespace driver {
                 	float target = parser::target_pos;
                 	motorOut(0);
                 	prev_state = (target > 0) ? ((curr_state - 1) % 6): ((curr_state + 1) % 6);
-                	Thread::wait(STALL_WAIT);
+                	// Thread::wait(STALL_WAIT);
                 } else if (new_op == parser::OP_VEL) {
                 	motorOut(0);
                 	prev_state = (curr_state - 1) % 6;
-                	Thread::wait(STALL_WAIT); 
+                	// Thread::wait(STALL_WAIT); 
                 }
 
                 parser::ready[DRVR_INDEX] = false;
@@ -164,11 +168,9 @@ namespace driver {
             }
 
             // Executes stuff if new_op involves driving the motors
-            switch (curr_op) {
-                case parser::OP_TUNE:
-                    //play tune
+            if (curr_op == parser::OP_TUNE){
                     for (int i = 0; i < TUNE_BUFFER; i++) {
-                        int half_period = parser::tunes_list[i];
+                        int half_period = read_tunes[i];
                         if (half_period) {
                             playTune(half_period, beat_period * 0.9);
                             Thread::wait(int(beat_period * 100)); // beat_period * 0.1 * 1000ms
@@ -176,21 +178,19 @@ namespace driver {
                             Thread::wait(int(beat_period * 1000));
                         }            
                     }
+            } else if (curr_op == parser::OP_NIL){
+                Thread::wait(PWM_PERIOD);
 
-                    break;
-                
-                case parser::OP_NIL:
-                    Thread::wait(PWM_PERIOD);
-                    break;
-                //run PWM for 1 cycle
-                default:
+            } else if ((curr_op == parser::OP_POS) || (curr_op == parser::OP_VEL) ||  (curr_op == parser::OP_PV)) {
                     drivePWM();
-
+                    debug_int++;
                     float readout = loop.read();
                     loop.reset();
                     Thread::wait((readout < PWM_PERIOD) ? PWM_PERIOD - readout : 0);
-                    break;
-            }
+            } 
+
+            debug_new_op = new_op;
+            debug_curr_op = curr_op;
 
         }
     }

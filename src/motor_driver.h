@@ -3,6 +3,7 @@
 
 #include "mbed.h"
 #include "rtos.h"
+#include "parser.h"
 
 //Motor Drive output pins   //Mask in output byte
 #define L1Lpin D4			//0x01
@@ -18,8 +19,14 @@
 
 namespace driver {
 
-		extern void runMotor();
-		extern void init();
+	// variables used for debugging, whatever I want it to be
+	extern int debug_int;
+	extern float debug_f;
+	extern parser::update_t debug_curr_op;
+	extern parser::update_t debug_new_op;
+
+	extern void runMotor();
+	extern void init();
 }
 
 #endif

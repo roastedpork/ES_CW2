@@ -235,6 +235,7 @@ namespace parser {
                     ready[0] = true;
                     ready[1] = true;
                     ready[2] = true;
+                    ready[3] = true;
 
                 }
 
