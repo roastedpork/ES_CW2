@@ -26,13 +26,20 @@ namespace parser {
 
     // Mapping of half periods of each note
     static const int error[] = {0,0,0};
-    static const int A[] = {1204 >> 4, 1136 >> 4, 1073 >> 4};  //A^ , A, A#
-    static const int B[] = {1073 >> 4, 1012 >> 4, 0};  //B^ , B, B#
-    static const int C[] = {0, 1911 >> 4, 1804 >> 4};  //C^ , C, C#
-    static const int D[] = {1804 >> 4, 1703 >> 4, 1607 >> 4};  //D^ , D, D#
-    static const int E[] = {1607 >> 4, 1517 >> 4, 0};  //E^ , E, E#
-    static const int F[] = {0, 1432 >> 4, 1351 >> 4};  //F^ , F, F#
-    static const int G[] = {1351 >> 4, 1273 >> 4, 1204 >> 4};  //G^ , G, G#
+    static const int A[] = {1204, 1136, 1073};  //A^ , A, A#
+    static const int B[] = {1073, 1012, 0};  //B^ , B, B#
+    static const int C[] = {0, 1911, 1804};  //C^ , C, C#
+    static const int D[] = {1804, 1703, 1607};  //D^ , D, D#
+    static const int E[] = {1607, 1517, 0};  //E^ , E, E#
+    static const int F[] = {0, 1432, 1351};  //F^ , F, F#
+    static const int G[] = {1351, 1273, 1204};  //G^ , G, G#    static const int error[] = {0,0,0};
+    // static const int A[] = {1204 >> 4, 1136 >> 4, 1073 >> 4};  //A^ , A, A#
+    // static const int B[] = {1073 >> 4, 1012 >> 4, 0};  //B^ , B, B#
+    // static const int C[] = {0, 1911 >> 4, 1804 >> 4};  //C^ , C, C#
+    // static const int D[] = {1804 >> 4, 1703 >> 4, 1607 >> 4};  //D^ , D, D#
+    // static const int E[] = {1607 >> 4, 1517 >> 4, 0};  //E^ , E, E#
+    // static const int F[] = {0, 1432 >> 4, 1351 >> 4};  //F^ , F, F#
+    // static const int G[] = {1351 >> 4, 1273 >> 4, 1204 >> 4};  //G^ , G, G#
 
 
     // Parser Functions
