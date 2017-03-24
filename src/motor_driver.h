@@ -13,15 +13,16 @@
 #define L3Lpin D9			//0x10
 #define L3Hpin D10			//0x20
 
-#define STALL_WAIT 	3000
-#define PWM_PERIOD 	0.05 // 20Hz PWM
-#define PWM_TICK 	0.0005 // 100 ticks give a full period
+#define STALL_WAIT 	5000
+#define PWM_PERIOD 	0.02 // 20Hz PWM
+#define PWM_TICK 	0.0002 // 100 ticks give a full period
 
 namespace driver {
 
 	// variables used for debugging, whatever I want it to be
 	extern int debug_int;
 	extern float debug_f;
+	extern parser::update_t debug_op;
 	extern parser::update_t debug_curr_op;
 	extern parser::update_t debug_new_op;
 

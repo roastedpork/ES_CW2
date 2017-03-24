@@ -37,6 +37,7 @@ namespace odometer {
 	// Position and Velocity variables to be used by other parts of the code
 	float position = 0;
 	float velocity = 0;
+	rtos::Mutex odometer_mutex;
 
 	//Convert photointerrupter inputs to a rotor state
 	static inline int8_t readRotorState(){
@@ -110,17 +111,17 @@ namespace odometer {
 				velocity_buffer[ma] = 0;
 			}
 			ma = (ma + 1) % 3;
+
+
+			odometer_mutex.lock();
 			velocity = (velocity_buffer[0] + velocity_buffer[1] + velocity_buffer[2]) / 3;
-
-
-
 			// Position update
 			if (forwards_dir_hex) {
 				position = deg60_ticks * HEX_RES + CH_ticks * TICK_RES;
 			} else {
 				position = (deg60_ticks + 1) * HEX_RES + CH_ticks * TICK_RES;
 			}
-
+			odometer_mutex.unlock();
 			Thread::wait(ODMT_PERIOD_MS);
 		}
 	}

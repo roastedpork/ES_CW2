@@ -26,6 +26,8 @@ namespace odometer {
 
 	extern float position;
 	extern float velocity;
+	extern rtos::Mutex odometer_mutex;
+
 
 	extern void init();
 	extern void updateState();

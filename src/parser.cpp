@@ -18,6 +18,7 @@ namespace parser {
     float tune_period = 0.5;
     update_t op_code = OP_NIL;
     int tunes_list[TUNE_BUFFER];
+    int durations_list[TUNE_BUFFER];
     volatile bool ready[4] =  {false, false, false, false};//{true, true, true, true};//{false, false, false};
 
     // For Tune setting
@@ -25,13 +26,13 @@ namespace parser {
 
     // Mapping of half periods of each note
     static const int error[] = {0,0,0};
-    static const int A[] = {1204, 1136, 1073};  //A^ , A, A#
-    static const int B[] = {1073, 1012, 0};  //B^ , B, B#
-    static const int C[] = {0, 1911, 1804};  //C^ , C, C#
-    static const int D[] = {1804, 1703, 1607};  //D^ , D, D#
-    static const int E[] = {1607, 1517, 0};  //E^ , E, E#
-    static const int F[] = {0, 1432, 1351};  //F^ , F, F#
-    static const int G[] = {1351, 1273, 1204};  //G^ , G, G#
+    static const int A[] = {1204 >> 4, 1136 >> 4, 1073 >> 4};  //A^ , A, A#
+    static const int B[] = {1073 >> 4, 1012 >> 4, 0};  //B^ , B, B#
+    static const int C[] = {0, 1911 >> 4, 1804 >> 4};  //C^ , C, C#
+    static const int D[] = {1804 >> 4, 1703 >> 4, 1607 >> 4};  //D^ , D, D#
+    static const int E[] = {1607 >> 4, 1517 >> 4, 0};  //E^ , E, E#
+    static const int F[] = {0, 1432 >> 4, 1351 >> 4};  //F^ , F, F#
+    static const int G[] = {1351 >> 4, 1273 >> 4, 1204 >> 4};  //G^ , G, G#
 
 
     // Parser Functions
@@ -64,6 +65,7 @@ namespace parser {
         float new_vel = 0;
         float bpm = 60;
         int new_tunes[TUNE_BUFFER];
+        int new_durations[TUNE_BUFFER];
 
         // Checks if string input is empty (except for '\r')
         if (_length <= 1){
@@ -74,6 +76,9 @@ namespace parser {
         std::memset(float_buffer, 0, 8);
         std::memset(note_buffer, 0, 3);
         std::memset(tunes_list, 0, TUNE_BUFFER * sizeof(int));
+        std::memset(durations_list, 0, TUNE_BUFFER * sizeof(int));
+        std::memset(new_tunes, 0, TUNE_BUFFER * sizeof(int));
+        std::memset(new_durations, 0, TUNE_BUFFER * sizeof(int));
         note_buffer[1] = 1;
 
         // Iterating through input_buffer
@@ -173,9 +178,8 @@ namespace parser {
                             //  pc.printf("parsed note: %c, duration: %d, half_period: %d\n\r", 'A' + note_buffer[0] - 1, reps, parsed_note);               
                             // }
 
-                            for (int i = 0; i < reps; i++){
-                                new_tunes[note_count++] = parsed_note;
-                            }
+                            new_tunes[note_count] = parsed_note;
+                            new_durations[note_count++] = reps;
 
                             // Reset buffers
                             std::memset(note_buffer, 0, 3);
@@ -190,34 +194,30 @@ namespace parser {
 
         switch (new_op){
             case 1:
+            	target_pos = new_pos;
                 op_code = OP_POS;
                 break;
             case 2:
+            	target_vel = new_vel;
                 op_code = OP_VEL;
                 break;
             case 3:
+            	target_pos = new_pos;
+            	target_vel = new_vel;
                 op_code = OP_PV;
                 break;
             case 4:
+                std::memcpy(tunes_list, new_tunes, sizeof(tunes_list));
+                std::memcpy(durations_list, new_durations, sizeof(durations_list));
                 op_code = OP_TUNE;
                 break;
             case 5:
+            	tune_period = 60 / bpm;
                 op_code = OP_BPM;
                 break;
             default:
                 op_code = OP_NIL;
                 break;
-        }
-
-        // Update state
-
-        if (op_code != OP_NIL){
-            target_pos = new_pos;
-            target_vel = new_vel;
-            tune_period = 60 / bpm;
-            for (int i = 0; i < 16; i++) {
-                tunes_list[i] = new_tunes[i];
-            }
         }
 
         return 1;

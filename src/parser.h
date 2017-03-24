@@ -5,7 +5,7 @@
 #include "rtos.h"
 
 #define BUFF_SIZE 64
-#define TUNE_BUFFER 64
+#define TUNE_BUFFER 16
 
 #define MAIN_INDEX 0
 #define ODMT_INDEX 1
@@ -30,6 +30,7 @@ namespace parser {
 	extern float tune_period;
 	extern update_t op_code;
 	extern int tunes_list[TUNE_BUFFER]; // Buffer of periods, from parsed tune
+	extern int durations_list[TUNE_BUFFER]; // Buffer of periods, from parsed tune
 	extern volatile bool ready[4]; // 0-> main, 2-> controller, 3-> driver
 
 	extern void init();

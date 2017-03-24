@@ -11,7 +11,7 @@ namespace controller {
 
     // Variable output for motor driver
     float duty_cycle = 50;
-
+    rtos::Mutex controller_mutex;
 
     // Position and velocity control variables
     static float error_p = 0;
@@ -37,7 +37,7 @@ namespace controller {
         float n = vel_kp * error_v + vel_ki * error_int; // pos_kd * error_delta; + pos_ki * error_int;
         float res = vel_k * n;
         res = (res > 100) ? 100 : res;
-        res = (res < -100) ? -100 : res;
+        res = (res < 0) ? 0 : res;
         return res;
     }
 
@@ -62,7 +62,14 @@ namespace controller {
 //        v_duty = (target_p > 0) ? std::abs(v_duty) : -std::abs(v_duty);
         // yes, the math works out
         
-        return (std::abs(v_duty) < std::abs(p_duty)) ? v_duty : p_duty;
+        float max_abs_duty = (std::abs(v_duty) < std::abs(p_duty)) ? std::abs(v_duty) : std::abs(p_duty);
+        
+        if (max_abs_duty < std::abs(p_duty)){
+        	return (p_duty > 0) ? max_abs_duty : - max_abs_duty;
+        } else {
+        	return p_duty;
+        }
+
         //return (std::abs(v_duty) < std::abs(p_duty)) ? v_duty : p_duty;//(target_v - std::abs(actual_v) > 0) ? p_duty : v_duty;
 
 //      return (target_v - std::abs(actual_v) > 0) ? p_duty : v_duty;
@@ -106,9 +113,10 @@ namespace controller {
                 parser::ready[CTRL_INDEX] = false;
             }
 
-
+            odometer::odometer_mutex.lock();
             actual_p = odometer::position;
             actual_v = odometer::velocity;
+            odometer::odometer_mutex.unlock();
 
             dt = pos_loop.read();
             pos_loop.reset();
@@ -125,7 +133,9 @@ namespace controller {
             
             }
 
+            controller_mutex.lock();
             duty_cycle = res;
+            controller_mutex.unlock();
 
             int readout = control_loop.read_ms();
             control_loop.reset();
