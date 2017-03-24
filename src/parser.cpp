@@ -4,7 +4,7 @@
 
 // I know I'm treating namespaces as classes, I beg for your mercy if this is sacrilegious
 namespace parser {
-    // Serial object
+    // Serial object for display
     RawSerial pc(SERIAL_TX, SERIAL_RX);
 
     // Serial Input variables
@@ -12,7 +12,7 @@ namespace parser {
     static volatile int input_counter = 0;
     static volatile bool input_ready = false;
 
-    // Parsed Output to be used by other parts of the code
+    // Shared resources written by the parser
     float target_pos = 0;
     float target_vel = 0;
     float tune_period = 0.5;
@@ -21,33 +21,42 @@ namespace parser {
     int durations_list[TUNE_BUFFER];
     volatile bool ready[4] =  {false, false, false, false};//{true, true, true, true};//{false, false, false};
 
-    // For Tune setting
+    // This is the mapping from our internal representation of a note
+    // to its half-period 
     static const int *note_half_period_map[8];
 
     // Mapping of half periods of each note
     static const int error[] = {0,0,0};
-    static const int A[] = {1204, 1136, 1073};  //A^ , A, A#
-    static const int B[] = {1073, 1012, 0};  //B^ , B, B#
-    static const int C[] = {0, 1911, 1804};  //C^ , C, C#
-    static const int D[] = {1804, 1703, 1607};  //D^ , D, D#
-    static const int E[] = {1607, 1517, 0};  //E^ , E, E#
-    static const int F[] = {0, 1432, 1351};  //F^ , F, F#
-    static const int G[] = {1351, 1273, 1204};  //G^ , G, G#    static const int error[] = {0,0,0};
-    // static const int A[] = {1204 >> 4, 1136 >> 4, 1073 >> 4};  //A^ , A, A#
-    // static const int B[] = {1073 >> 4, 1012 >> 4, 0};  //B^ , B, B#
-    // static const int C[] = {0, 1911 >> 4, 1804 >> 4};  //C^ , C, C#
-    // static const int D[] = {1804 >> 4, 1703 >> 4, 1607 >> 4};  //D^ , D, D#
-    // static const int E[] = {1607 >> 4, 1517 >> 4, 0};  //E^ , E, E#
-    // static const int F[] = {0, 1432 >> 4, 1351 >> 4};  //F^ , F, F#
-    // static const int G[] = {1351 >> 4, 1273 >> 4, 1204 >> 4};  //G^ , G, G#
+    
+    // Half period mappings for the middle octave
+    // static const int A[] = {1204, 1136, 1073};  //A^ , A, A#
+    // static const int B[] = {1073, 1012, 0};  	//B^ , B, B#
+    // static const int C[] = {0, 1911, 1804};  	//C^ , C, C#
+    // static const int D[] = {1804, 1703, 1607};  //D^ , D, D#
+    // static const int E[] = {1607, 1517, 0};  	//E^ , E, E#
+    // static const int F[] = {0, 1432, 1351};  	//F^ , F, F#
+    // static const int G[] = {1351, 1273, 1204};  //G^ , G, G# 
+
+    // Half period mappings for the 8th octave
+    static const int A[] = {1204 >> 4, 1136 >> 4, 1073 >> 4};  	//A^ , A, A#
+    static const int B[] = {1073 >> 4, 1012 >> 4, 0};  			//B^ , B, B#
+    static const int C[] = {0, 1911 >> 4, 1804 >> 4};  			//C^ , C, C#
+    static const int D[] = {1804 >> 4, 1703 >> 4, 1607 >> 4};  	//D^ , D, D#
+    static const int E[] = {1607 >> 4, 1517 >> 4, 0};  			//E^ , E, E#
+    static const int F[] = {0, 1432 >> 4, 1351 >> 4};  			//F^ , F, F#
+    static const int G[] = {1351 >> 4, 1273 >> 4, 1204 >> 4};  	//G^ , G, G#
 
 
     // Parser Functions
+
+    // Interrupt function called whenever there is a user keystroke
     static void serial_isr(){
         if (pc.readable() && (input_counter < BUFF_SIZE) && (!input_ready)) {
+            // Stores keystoke into an internal buffer
             input_buffer[input_counter++] = pc.getc();
             pc.putc(input_buffer[input_counter-1]); 
             
+            // Let's parser process the input whenever user presses enter button 
             if (input_buffer[input_counter-1] == '\r') {            
                 pc.putc('\n'); 
                 input_ready = true;
@@ -55,6 +64,7 @@ namespace parser {
         } 
     }
 
+    // Threading implementation for parser
     static int parseCommand(const int _length){
         // Parsing variables
         char op_char = 0;
@@ -79,7 +89,7 @@ namespace parser {
             return 0;
         }
         
-        // Initialising buffers
+        // Initialising buffers and internal variables
         std::memset(float_buffer, 0, 8);
         std::memset(note_buffer, 0, 3);
         std::memset(tunes_list, 0, TUNE_BUFFER * sizeof(int));
@@ -90,8 +100,11 @@ namespace parser {
 
         // Iterating through input_buffer
         while (count < _length) {
+
+        	// Reads the current character
             char current_char = input_buffer[count++];
             
+
             switch(current_char){
                 case 'R':
                     if ((op_char == 'V') || (op_char == 'R') || (op_char == 'T') || (op_char == 'M')) {
@@ -110,7 +123,7 @@ namespace parser {
                         new_op |= 0x01;
 
                     } else if ((op_char == 'V') || (op_char == 'T') || (op_char == 'M')){
-                        return 0;
+                        return 0; // For invalid syntax
                     } else {
                         op_char = current_char; 
                     }
@@ -118,7 +131,7 @@ namespace parser {
                 
                 case 'T':
                     if ((op_char == 'V') || (op_char == 'R') || (op_char == 'M')) {
-                        return 0;
+                        return 0; // For invalid syntax
                     } else {
                         op_char = current_char; 
                     }
@@ -126,12 +139,13 @@ namespace parser {
 
                 case 'M':
                     if ((op_char == 'V') || (op_char == 'R') || (op_char == 'T') ) {
-                        return 0;
+                        return 0; // For invalid syntax
                     } else {
                         op_char = current_char;
                     }
                     break;
 
+                // Stores new values at the end of the buffer 
                 case '\r':
                     if(op_char == 'R'){
                         new_pos = (float)std::atof(float_buffer);
@@ -151,20 +165,28 @@ namespace parser {
                     
                     break;
 
+                // Stores characters in the float/note buffer
                 default:
+
+                	// Handling musical notes
                     if (op_char == 'T') {
+
+                    	// if the current character is between 'A' to 'G'
                         if ((current_char == 'A') || (current_char == 'B') || 
                             (current_char == 'C') || (current_char == 'D') || 
                             (current_char == 'E') || (current_char == 'F') || 
                             (current_char == 'G')) {
                             note_buffer[0] = int(current_char - 'A') + 1;
                         }              
+
+                        // Sharp or flat
                         if (current_char == '^'){
                             note_buffer[1] = 0;
                         } else if (current_char == '#') {
                             note_buffer[1] = 2;
                         }
 
+                        // Duration
                         if ((current_char == '1') || (current_char == '2') || 
                             (current_char == '3') || (current_char == '4') || 
                             (current_char == '5') || (current_char == '6') || 
@@ -174,17 +196,10 @@ namespace parser {
                             int parsed_note = note_half_period_map[note_buffer[0]][note_buffer[1]];
                             
                             if (parsed_note == 0) {
-                                // pc.printf("Invalid note\n\r");
-                                return 0;
+                                return 0; // Invalid note
                             } 
-                            
-                            // if (note_buffer[1] != 1){
-                            //  pc.printf("parsed note: %c%c, duration: %d, half_period: %d\n\r", 'A' + note_buffer[0] - 1, temp_char, reps, parsed_note);
-                            //  char temp_char = (note_buffer[1] == 0) ? '^' : '#';
-                            // } else {
-                            //  pc.printf("parsed note: %c, duration: %d, half_period: %d\n\r", 'A' + note_buffer[0] - 1, reps, parsed_note);               
-                            // }
 
+                            // Stores the newly parsed note
                             new_tunes[note_count] = parsed_note;
                             new_durations[note_count++] = reps;
 
@@ -193,12 +208,15 @@ namespace parser {
                             note_buffer[1] = 1;
                         }
                     } else {
+                    	// Stores it in the value buffer 
                         float_buffer[float_buffer_ind++] = current_char;
                     }
                     break;
             }
         }
 
+        // If the function reaches here, it has parsed the string correctly
+        // proceeds to store the parsed values onto the shared resources
         switch (new_op){
             case 1:
             	target_pos = new_pos;
@@ -227,16 +245,17 @@ namespace parser {
                 break;
         }
 
-        return 1;
+        return 1; // Returns a 1 indicating that the parsed string is valid
     }
 
+    // Threading implementation of the parser
     void pollSerialIn(){
         while(1){
+        	// If user hits the enter button
             if (input_ready) {
                 int length = input_counter;
-                
-                // pc.printf("strlen: %d, echo: %s\n", length, input_buffer); 
-                
+				
+				// Sets the ready variable if the parsed string is valid                
                 if(parseCommand(length)){
                     // Unrolling for faster assignment
                     ready[0] = true;
@@ -246,15 +265,18 @@ namespace parser {
 
                 }
 
+                // Resets the input variables
                 std::memset(input_buffer, 0 , BUFF_SIZE);
                 input_ready = false;
                 input_counter = 0;
             }
 
+            // Long waiting time for fun
             Thread::wait(500);
         }
     }
 
+    // Initialization function for serial and mapping
     void init(){
         pc.baud(9600);
         pc.attach(&serial_isr);

@@ -13,22 +13,25 @@
 #define L3Lpin D9			//0x10
 #define L3Hpin D10			//0x20
 
-
-#define LOW_SPEED_PWM_PERIOD 0.01
+// Some defined periods
+#define LOW_SPEED_PWM_PERIOD 0.01 // in us
 #define SPEED_THRESH 15
 #define STALL_WAIT 	5000
-#define PWM_PERIOD 	0.005 // 200Hz PWM
-#define PWM_TICK 	0.0005 // 100 ticks give a full period
+
+// For our own implementation of the PWM
+#define PWM_PERIOD 	0.005 	// 200Hz PWM
+#define PWM_TICK 	0.00005 // 100 ticks give a full period
 
 namespace driver {
 
-	// variables used for debugging, whatever I want it to be
+	// Debugging variables, whatever I want it to be
 	extern int debug_int;
 	extern float debug_f;
 	extern parser::update_t debug_op;
 	extern parser::update_t debug_curr_op;
 	extern parser::update_t debug_new_op;
 
+	// Initialization and threading functions
 	extern void runMotor();
 	extern void init();
 }

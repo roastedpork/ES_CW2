@@ -3,11 +3,8 @@
 #include "motor_driver.h"
 
 namespace odometer {
-
-	// Mapping from interrupter inputs to sequential rotor states. 0x00 and 0x07 are not valid
-	// 0x00 and 0x07 are don't cares because no instance where all 3 photointerrupters are high or low 
+	// Some mappings used by the code
 	static const int8_t stateMap[] = {0x07,0x05,0x03,0x04,0x01,0x00,0x02,0x07};  
-
 	static const int8_t forwards[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x00, 0x07, 0x07};
 	static const int8_t reverse[] = {0x05, 0x00, 0x01, 0x02, 0x03, 0x04, 0x07, 0x07};
 
@@ -50,7 +47,7 @@ namespace odometer {
 		return stateMap[I1 + 2*I2 + 4*I3];
 	}
 	
-	// Input pins interrupt functions
+	// Input pins interrupt functions, for accurate counting of position
 	static void I_isr(){
 		current_motor_state = readRotorState();
 
@@ -81,26 +78,25 @@ namespace odometer {
 		speedometer_CH.reset();
 	}
 
+	// Threading implementation
 	void updateState(){
 		speedometer_CH.reset();
-
 		speedometer_CH.start();
 
+		// Internal variables
 		float velocity_buffer[3]; 	// moving average buffer of 3 periods
 		int ma = 0;					// moving average buffer index 
 		parser::update_t curr_op = parser::OP_NIL;
 
 
 		while(1) {
-
+			// Checks update from parser
 			if (parser::ready[ODMT_INDEX]){
 				curr_op = parser::op_code;
 				parser::ready[ODMT_INDEX] = false;
 
-				// unlock mutex here
-
+				// Reset values if motor needs to move
 				if ((curr_op == parser::OP_POS) || (curr_op == parser::OP_VEL) || (curr_op == parser::OP_PV)) {
-					// Thread::wait(STALL_WAIT);
 					deg60_ticks = 0;
 					CH_ticks = 0;
 					velocity_buffer[0] = 0;
@@ -108,6 +104,7 @@ namespace odometer {
 					velocity_buffer[1] = 0;
 				}
 			}
+
 			// Velocity update
 			if (update_speed) {
 				velocity_buffer[ma] = velocity_CH;
@@ -117,7 +114,7 @@ namespace odometer {
 			}
 			ma = (ma + 1) % 3;
 
-
+			// Update shared resources
 			odometer_mutex.lock();
 			velocity = (velocity_buffer[0] + velocity_buffer[1] + velocity_buffer[2]) / 3;
 			// Position update
@@ -128,8 +125,7 @@ namespace odometer {
 			}
 			odometer_mutex.unlock();
 
-			debug_a = deg60_ticks;
-			debug_b = CH_ticks;
+			// Control loop wait
 			Thread::wait(ODMT_PERIOD_MS);
 		}
 	}

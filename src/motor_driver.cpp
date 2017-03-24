@@ -15,11 +15,11 @@ namespace driver {
 
     //Digital Motor Drive outputs
     static PwmOut L1L(L1Lpin); 
-    static PwmOut L1H(L1Hpin);
     static PwmOut L2L(L2Lpin);
-    static PwmOut L2H(L2Hpin);
     static PwmOut L3L(L3Lpin);
-    static PwmOut L3H(L3Hpin);
+    static DigitalOut L1H(L1Hpin);
+    static DigitalOut L2H(L2Hpin);
+    static DigitalOut L3H(L3Hpin);
 
     // Variables for PWM controllers
     static int PWM_counter = 0;
@@ -94,24 +94,25 @@ namespace driver {
         do_pwm = false;
     }
 
+    static void setPWMPeriod_us(int _p) {
+		L1L.period_us(_p); 
+		L2L.period_us(_p);
+		L3L.period_us(_p);
+    }
+
     static void setPWMPeriod(float _p) {
 		L1L.period(_p); 
-		L1H.period(_p);
 		L2L.period(_p);
-		L2H.period(_p);
 		L3L.period(_p);
-		L3H.period(_p);
     }
 
     static void playTune(int half_period, float duration){
-        float period_s = half_period / 500;
-        setPWMPeriod(period_s);
         Timer beat;
+      	
+      	setPWMPeriod_us(half_period << 1);
         beat.start();
 
-        // debug_int = half_period;
-        // debug_f = duration;
-        motorOut(0,0.03);
+        motorOut(0,0.5);
         while (beat.read() < duration) {
             // motorOut(0, 1);
             // Thread::wait(half_period);
@@ -217,8 +218,8 @@ namespace driver {
                         int reps = read_durations[i];
                         if (half_period) {
                         for (int j = 0; j < reps; j++){
-	                            playTune(half_period, beat_period);// * 0.9);
-	                            // Thread::wait(int(beat_period * 100)); // beat_period * 0.1 * 1000ms
+	                            playTune(half_period, beat_period * 0.9);
+	                            Thread::wait(int(beat_period * 100)); // beat_period * 0.1 * 1000ms
                     		} 
                         }
                     }

@@ -4,12 +4,16 @@
 #include "mbed.h"
 #include "rtos.h"
 
-#define CTRL_PERIOD 	0.02 	//50Hz
-#define CTRL_PERIOD_MS 	20		//50Hz
+//50Hz update cycle for the controller
+#define CTRL_PERIOD 	0.02 	
+#define CTRL_PERIOD_MS 	20	
 
 namespace controller {
+	// Shared resources
 	extern rtos::Mutex controller_mutex;
     extern float duty_cycle;
+
+    // Threading function
     extern void nextStep();
 }
 
