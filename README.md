@@ -15,10 +15,12 @@ Members:
 - Tune Playing         : T\[(note)(duration)\]{1,16}
 - Set tempo (in BPM)   : M(value)
 
-## Other things to note
+## Other known issues/bugs
 
 Our motor does not have enough torque to overcome the stalling friction, even at 100% duty cycle.
 Hence we needed to give it a slight push for every rotation operation.
-We hope that you would prod the motor whenever it give a duty cycle value of 100 even though the motor has yet completed its set number of rotations.
+We hope that you would prod the motor whenever it give a duty cycle value of 100 even though the motor has yet completed its set number of rotations. Hopefully our results would not be penalized due to the hardware fault. 
+
+The motor needs a sufficient current to run properly, at least 500mA.
 
 We also did not manage to get the auto-tuner to work.
